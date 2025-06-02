@@ -79,10 +79,10 @@ export default function SignUpPage() {
 
         toast({
           title: "Success",
-          description: "Account created successfully! Please check your email to verify your account.",
+          description: "Account created successfully! Welcome to ConsultPro.",
         })
 
-        router.push("/dashboard")
+        router.push("/")
         router.refresh()
       }
     } catch (error) {

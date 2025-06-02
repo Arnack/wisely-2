@@ -44,7 +44,7 @@ export default function LoginPage() {
         description: "Signed in successfully!",
       })
 
-      router.push("/dashboard")
+      router.push("/")
       router.refresh()
     } catch (error) {
       toast({

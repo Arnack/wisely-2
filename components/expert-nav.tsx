@@ -10,10 +10,10 @@ export function ExpertNav() {
   return (
     <nav className="flex items-center space-x-6 lg:space-x-8">
       <Link
-        href="/expert/dashboard"
+        href="/"
         className={cn(
           "text-sm font-medium transition-colors hover:text-primary",
-          pathname === "/expert/dashboard" ? "text-foreground" : "text-muted-foreground",
+          pathname === "/" ? "text-foreground" : "text-muted-foreground",
         )}
       >
         Dashboard
