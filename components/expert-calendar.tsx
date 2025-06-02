@@ -114,6 +114,8 @@ export function ExpertCalendar({
   const [isLoading, setIsLoading] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTimeRange, setSelectedTimeRange] = useState<{start: Date, end: Date} | null>(null)
+  const [showInstructions, setShowInstructions] = useState(false)
+  const [showStats, setShowStats] = useState(false)
   
   const [bulkForm, setBulkForm] = useState<BulkAvailabilityForm>({
     date: "",
@@ -467,96 +469,118 @@ export function ExpertCalendar({
 
   return (
     <div className="space-y-6">
+      {/* Toggle Controls */}
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowInstructions(!showInstructions)}
+        >
+          {showInstructions ? "Hide" : "Show"} Instructions
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowStats(!showStats)}
+        >
+          {showStats ? "Hide" : "Show"} Statistics
+        </Button>
+      </div>
+
       {/* Usage Instructions */}
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MousePointer className="h-5 w-5 text-blue-600" />
-            How to Use Your Calendar
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">Creating Availability</h4>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• <strong>Drag</strong> on the calendar to select time ranges</li>
-                <li>• <strong>Click</strong> on a date for bulk scheduling</li>
-                <li>• Use "Add Availability" button for advanced options</li>
-              </ul>
+      {showInstructions && (
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MousePointer className="h-5 w-5 text-blue-600" />
+              How to Use Your Calendar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Creating Availability</h4>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>• <strong>Drag</strong> on the calendar to select time ranges</li>
+                  <li>• <strong>Click</strong> on a date for bulk scheduling</li>
+                  <li>• Use "Add Availability" button for advanced options</li>
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Managing Appointments</h4>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>• <strong>Click</strong> any event to view details</li>
+                  <li>• Approve/decline pending appointments</li>
+                  <li>• Delete unused availability slots</li>
+                </ul>
+              </div>
             </div>
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">Managing Appointments</h4>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• <strong>Click</strong> any event to view details</li>
-                <li>• Approve/decline pending appointments</li>
-                <li>• Delete unused availability slots</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Calendar Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available Slots</CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {availabilitySlots.filter(slot => !slot.is_booked).length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Open for booking
-            </p>
-          </CardContent>
-        </Card>
+      {showStats && (
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Available Slots</CardTitle>
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {availabilitySlots.filter(slot => !slot.is_booked).length}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Open for booking
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Booked Slots</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {availabilitySlots.filter(slot => slot.is_booked).length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Currently booked
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Booked Slots</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {availabilitySlots.filter(slot => slot.is_booked).length}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Currently booked
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Appointments</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {appointments.filter(apt => apt.status === "pending").length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting response
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Appointments</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {appointments.filter(apt => apt.status === "pending").length}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Awaiting response
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Hourly Rate</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${hourlyRate}</div>
-            <p className="text-xs text-muted-foreground">
-              Per consultation
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Hourly Rate</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${hourlyRate}</div>
+              <p className="text-xs text-muted-foreground">
+                Per consultation
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Calendar Controls */}
       <Card>
