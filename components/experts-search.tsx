@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,7 +31,8 @@ import {
   X,
   Loader2,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  RotateCcw
 } from "lucide-react"
 import Link from "next/link"
 
@@ -79,8 +80,8 @@ export function ExpertsSearch({ initialExperts, expertiseAreas }: ExpertsSearchP
   const [isLoading, setIsLoading] = useState(false)
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [currentPage, setCurrentPage] = useState(1)
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
   
+  // Current search filters (what user is editing)
   const [filters, setFilters] = useState<SearchFilters>({
     searchTerm: searchParams.get("search") || "",
     selectedExpertise: searchParams.get("expertise")?.split(",").filter(Boolean) || [],
@@ -91,26 +92,13 @@ export function ExpertsSearch({ initialExperts, expertiseAreas }: ExpertsSearchP
     sortOrder: (searchParams.get("sortOrder") as "asc" | "desc") || "desc"
   })
 
+  // Applied filters (what's actually being used for search)
+  const [appliedFilters, setAppliedFilters] = useState<SearchFilters>(filters)
+
   const supabase = createClient()
 
-  // Update URL when filters change
-  useEffect(() => {
-    const params = new URLSearchParams()
-    
-    if (filters.searchTerm) params.set("search", filters.searchTerm)
-    if (filters.selectedExpertise.length > 0) params.set("expertise", filters.selectedExpertise.join(","))
-    if (filters.minRating > 0) params.set("minRating", filters.minRating.toString())
-    if (filters.maxHourlyRate < 500) params.set("maxRate", filters.maxHourlyRate.toString())
-    if (filters.subscriptionType !== "all") params.set("type", filters.subscriptionType)
-    if (filters.sortBy !== "rating") params.set("sortBy", filters.sortBy)
-    if (filters.sortOrder !== "desc") params.set("sortOrder", filters.sortOrder)
-
-    const newUrl = params.toString() ? `?${params.toString()}` : ""
-    router.replace(`/experts${newUrl}`, { scroll: false })
-  }, [filters, router])
-
   // Fetch experts with filters
-  const fetchExperts = async (searchFilters: SearchFilters) => {
+  const fetchExperts = useCallback(async (searchFilters: SearchFilters) => {
     setIsLoading(true)
     try {
       let query = supabase
@@ -176,12 +164,34 @@ export function ExpertsSearch({ initialExperts, expertiseAreas }: ExpertsSearchP
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [supabase])
 
-  // Apply filters when they change
-  useEffect(() => {
+  // Apply search when button is clicked
+  const handleSearch = useCallback(() => {
+    setAppliedFilters(filters)
+    setCurrentPage(1)
     fetchExperts(filters)
-  }, [filters])
+    
+    // Update URL
+    const params = new URLSearchParams()
+    if (filters.searchTerm) params.set("search", filters.searchTerm)
+    if (filters.selectedExpertise.length > 0) params.set("expertise", filters.selectedExpertise.join(","))
+    if (filters.minRating > 0) params.set("minRating", filters.minRating.toString())
+    if (filters.maxHourlyRate < 500) params.set("maxRate", filters.maxHourlyRate.toString())
+    if (filters.subscriptionType !== "all") params.set("type", filters.subscriptionType)
+    if (filters.sortBy !== "rating") params.set("sortBy", filters.sortBy)
+    if (filters.sortOrder !== "desc") params.set("sortOrder", filters.sortOrder)
+
+    const newUrl = params.toString() ? `?${params.toString()}` : ""
+    router.replace(`/experts${newUrl}`, { scroll: false })
+  }, [filters, fetchExperts, router])
+
+  // Handle Enter key in search input
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch()
+    }
+  }
 
   // Filtered and paginated results
   const paginatedExperts = useMemo(() => {
@@ -194,20 +204,23 @@ export function ExpertsSearch({ initialExperts, expertiseAreas }: ExpertsSearchP
 
   const updateFilter = (key: keyof SearchFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }))
-    setCurrentPage(1) // Reset to first page when filtering
   }
 
   const clearFilters = () => {
-    setFilters({
+    const defaultFilters = {
       searchTerm: "",
       selectedExpertise: [],
       minRating: 0,
       maxHourlyRate: 500,
-      subscriptionType: "all",
-      sortBy: "rating",
-      sortOrder: "desc"
-    })
+      subscriptionType: "all" as const,
+      sortBy: "rating" as const,
+      sortOrder: "desc" as const
+    }
+    setFilters(defaultFilters)
+    setAppliedFilters(defaultFilters)
     setCurrentPage(1)
+    fetchExperts(defaultFilters)
+    router.replace("/experts", { scroll: false })
   }
 
   const toggleExpertise = (expertise: string) => {
@@ -360,214 +373,149 @@ export function ExpertsSearch({ initialExperts, expertiseAreas }: ExpertsSearchP
     )
   }
 
+  // Check if filters have changes that aren't applied yet
+  const hasUnappliedChanges = JSON.stringify(filters) !== JSON.stringify(appliedFilters)
+
   return (
     <div className="space-y-6">
-      {/* Search and Quick Filters */}
-      <div className="space-y-4">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search experts by name, title, or skills..."
-              value={filters.searchTerm}
-              onChange={(e) => updateFilter("searchTerm", e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          
-          <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="shrink-0">
-                <SlidersHorizontal className="h-4 w-4 mr-2" />
-                Filters
-                {(filters.selectedExpertise.length > 0 || filters.minRating > 0 || 
-                  filters.maxHourlyRate < 500 || filters.subscriptionType !== "all") && (
-                  <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
-                    {filters.selectedExpertise.length + 
-                     (filters.minRating > 0 ? 1 : 0) + 
-                     (filters.maxHourlyRate < 500 ? 1 : 0) + 
-                     (filters.subscriptionType !== "all" ? 1 : 0)}
-                  </Badge>
-                )}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Filter Experts</DialogTitle>
-                <DialogDescription>
-                  Refine your search to find the perfect expert
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-6">
-                {/* Expertise Areas */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">Expertise Areas</Label>
-                  <div className="grid gap-2 max-h-40 overflow-y-auto">
-                    {expertiseAreas.map(area => (
-                      <div key={area} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={area}
-                          checked={filters.selectedExpertise.includes(area)}
-                          onCheckedChange={() => toggleExpertise(area)}
-                        />
-                        <Label htmlFor={area} className="text-sm cursor-pointer">
-                          {area}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Rating Filter */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">
-                    Minimum Rating: {filters.minRating}+
-                  </Label>
-                  <Slider
-                    value={[filters.minRating]}
-                    onValueChange={([value]) => updateFilter("minRating", value)}
-                    max={5}
-                    min={0}
-                    step={0.5}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Any</span>
-                    <span>5.0</span>
-                  </div>
-                </div>
-
-                {/* Price Range */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">
-                    Max Hourly Rate: ${filters.maxHourlyRate}
-                  </Label>
-                  <Slider
-                    value={[filters.maxHourlyRate]}
-                    onValueChange={([value]) => updateFilter("maxHourlyRate", value)}
-                    max={500}
-                    min={25}
-                    step={25}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>$25</span>
-                    <span>$500+</span>
-                  </div>
-                </div>
-
-                {/* Subscription Type */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">Account Type</Label>
-                  <Select 
-                    value={filters.subscriptionType} 
-                    onValueChange={(value) => updateFilter("subscriptionType", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="free">Free Experts</SelectItem>
-                      <SelectItem value="premium">Premium Experts</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button onClick={clearFilters} variant="outline" className="flex-1">
-                    Clear All
-                  </Button>
-                  <Button onClick={() => setIsFilterDialogOpen(false)} className="flex-1">
-                    Apply Filters
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+      {/* Search Bar */}
+      <div className="flex gap-3">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search experts by name, title, or skills..."
+            value={filters.searchTerm}
+            onChange={(e) => updateFilter("searchTerm", e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="pl-9"
+          />
         </div>
-
-        {/* Active Filters */}
-        {(filters.selectedExpertise.length > 0 || filters.searchTerm || filters.minRating > 0 || 
-          filters.maxHourlyRate < 500 || filters.subscriptionType !== "all") && (
-          <div className="flex flex-wrap gap-2">
-            {filters.searchTerm && (
-              <Badge variant="secondary" className="px-3 py-1">
-                Search: "{filters.searchTerm}"
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto p-0 ml-2"
-                  onClick={() => updateFilter("searchTerm", "")}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            )}
-            {filters.selectedExpertise.map(skill => (
-              <Badge key={skill} variant="secondary" className="px-3 py-1">
-                {skill}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto p-0 ml-2"
-                  onClick={() => toggleExpertise(skill)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ))}
-            {filters.minRating > 0 && (
-              <Badge variant="secondary" className="px-3 py-1">
-                {filters.minRating}+ Rating
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto p-0 ml-2"
-                  onClick={() => updateFilter("minRating", 0)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            )}
-            {filters.maxHourlyRate < 500 && (
-              <Badge variant="secondary" className="px-3 py-1">
-                Under ${filters.maxHourlyRate}/hr
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto p-0 ml-2"
-                  onClick={() => updateFilter("maxHourlyRate", 500)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            )}
-            {filters.subscriptionType !== "all" && (
-              <Badge variant="secondary" className="px-3 py-1">
-                {filters.subscriptionType} Only
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto p-0 ml-2"
-                  onClick={() => updateFilter("subscriptionType", "all")}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            )}
-          </div>
+        <Button 
+          onClick={handleSearch}
+          disabled={isLoading}
+          className="shrink-0"
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <Search className="h-4 w-4 mr-2" />
+          )}
+          Search
+        </Button>
+        {hasUnappliedChanges && (
+          <Button 
+            variant="outline"
+            onClick={clearFilters}
+            className="shrink-0"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset
+          </Button>
         )}
       </div>
 
-      {/* Sort and View Options */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">
-            {isLoading ? "Loading..." : `${experts.length} experts found`}
-          </span>
-          
+      {/* Filters Row */}
+      <div className="grid gap-4 md:grid-cols-5 p-4 bg-muted/30 rounded-lg border">
+        {/* Expertise Areas */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Expertise</Label>
+          <Select 
+            value={filters.selectedExpertise.length > 0 ? "selected" : "all"}
+            onValueChange={(value) => {
+              if (value === "all") {
+                updateFilter("selectedExpertise", [])
+              }
+            }}
+          >
+            <SelectTrigger className="h-9">
+              <div className="flex items-center gap-2">
+                {filters.selectedExpertise.length > 0 ? (
+                  <Badge variant="secondary" className="text-xs">
+                    {filters.selectedExpertise.length} selected
+                  </Badge>
+                ) : (
+                  "All areas"
+                )}
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All areas</SelectItem>
+              <div className="border-t my-1" />
+              <div className="px-2 py-1 max-h-48 overflow-y-auto">
+                <div className="grid gap-2">
+                  {expertiseAreas.map(area => (
+                    <div key={area} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`filter-${area}`}
+                        checked={filters.selectedExpertise.includes(area)}
+                        onCheckedChange={() => toggleExpertise(area)}
+                      />
+                      <Label htmlFor={`filter-${area}`} className="text-sm cursor-pointer">
+                        {area}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Rating Filter */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">
+            Min Rating: {filters.minRating > 0 ? `${filters.minRating}+` : 'Any'}
+          </Label>
+          <div className="px-3">
+            <Slider
+              value={[filters.minRating]}
+              onValueChange={([value]) => updateFilter("minRating", value)}
+              max={5}
+              min={0}
+              step={0.5}
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        {/* Price Range */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">
+            Max Rate: ${filters.maxHourlyRate}{filters.maxHourlyRate >= 500 ? '+' : ''}
+          </Label>
+          <div className="px-3">
+            <Slider
+              value={[filters.maxHourlyRate]}
+              onValueChange={([value]) => updateFilter("maxHourlyRate", value)}
+              max={500}
+              min={25}
+              step={25}
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        {/* Account Type */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Account Type</Label>
+          <Select 
+            value={filters.subscriptionType} 
+            onValueChange={(value) => updateFilter("subscriptionType", value)}
+          >
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="free">Free Experts</SelectItem>
+              <SelectItem value="premium">Premium Experts</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Sort */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Sort By</Label>
           <Select 
             value={`${filters.sortBy}-${filters.sortOrder}`}
             onValueChange={(value) => {
@@ -576,7 +524,7 @@ export function ExpertsSearch({ initialExperts, expertiseAreas }: ExpertsSearchP
               updateFilter("sortOrder", sortOrder)
             }}
           >
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -588,6 +536,54 @@ export function ExpertsSearch({ initialExperts, expertiseAreas }: ExpertsSearchP
               <SelectItem value="newest-desc">Newest First</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      {/* Active Applied Filters */}
+      {(appliedFilters.selectedExpertise.length > 0 || appliedFilters.searchTerm || 
+        appliedFilters.minRating > 0 || appliedFilters.maxHourlyRate < 500 || 
+        appliedFilters.subscriptionType !== "all") && (
+        <div className="flex flex-wrap gap-2">
+          <span className="text-sm text-muted-foreground">Active filters:</span>
+          {appliedFilters.searchTerm && (
+            <Badge variant="secondary" className="px-3 py-1">
+              Search: "{appliedFilters.searchTerm}"
+            </Badge>
+          )}
+          {appliedFilters.selectedExpertise.map(skill => (
+            <Badge key={skill} variant="secondary" className="px-3 py-1">
+              {skill}
+            </Badge>
+          ))}
+          {appliedFilters.minRating > 0 && (
+            <Badge variant="secondary" className="px-3 py-1">
+              {appliedFilters.minRating}+ Rating
+            </Badge>
+          )}
+          {appliedFilters.maxHourlyRate < 500 && (
+            <Badge variant="secondary" className="px-3 py-1">
+              Under ${appliedFilters.maxHourlyRate}/hr
+            </Badge>
+          )}
+          {appliedFilters.subscriptionType !== "all" && (
+            <Badge variant="secondary" className="px-3 py-1">
+              {appliedFilters.subscriptionType} Only
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {/* Results Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">
+            {isLoading ? "Loading..." : `${experts.length} experts found`}
+          </span>
+          {hasUnappliedChanges && (
+            <Badge variant="outline" className="text-xs">
+              Filters changed - click Search to apply
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
