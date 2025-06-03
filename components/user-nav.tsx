@@ -52,6 +52,15 @@ export function UserNav({ user }: UserNavProps) {
       .toUpperCase()
   }
 
+  // Role-specific navigation paths
+  const getProfilePath = () => {
+    return user.role === "expert" ? "/expert/profile" : "/customer/profile"
+  }
+
+  const getSettingsPath = () => {
+    return user.role === "expert" ? "/expert/settings" : "/customer/settings"
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -67,12 +76,29 @@ export function UserNav({ user }: UserNavProps) {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.full_name}</p>
             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            <p className="text-xs leading-none text-muted-foreground capitalize">
+              {user.role === "expert" ? "Expert Account" : "Customer Account"}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => router.push("/profile")}>Profile</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push("/settings")}>Settings</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push(getProfilePath())}>
+            Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push(getSettingsPath())}>
+            Settings
+          </DropdownMenuItem>
+          {user.role === "expert" && (
+            <DropdownMenuItem onClick={() => router.push("/expert/appointments")}>
+              My Appointments
+            </DropdownMenuItem>
+          )}
+          {user.role === "user" && (
+            <DropdownMenuItem onClick={() => router.push("/appointments")}>
+              My Appointments
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>Log out</DropdownMenuItem>

@@ -45,6 +45,15 @@ export function ExpertNav() {
       >
         Profile
       </Link>
+      <Link
+        href="/expert/settings"
+        className={cn(
+          "text-sm font-medium transition-colors hover:text-primary",
+          pathname === "/expert/settings" ? "text-foreground" : "text-muted-foreground",
+        )}
+      >
+        Settings
+      </Link>
     </nav>
   )
 }
