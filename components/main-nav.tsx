@@ -36,6 +36,15 @@ export function MainNav() {
       >
         My Appointments
       </Link>
+      <Link
+        href="/call-demo"
+        className={cn(
+          "text-sm font-medium transition-colors hover:text-primary",
+          pathname === "/call-demo" ? "text-foreground" : "text-muted-foreground",
+        )}
+      >
+        Video Demo
+      </Link>
     </nav>
   )
 }
