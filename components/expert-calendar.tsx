@@ -468,47 +468,29 @@ export function ExpertCalendar({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Toggle Controls */}
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowInstructions(!showInstructions)}
-        >
-          {showInstructions ? "Hide" : "Show"} Instructions
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowStats(!showStats)}
-        >
-          {showStats ? "Hide" : "Show"} Statistics
-        </Button>
-      </div>
-
+    <div className="space-y-4">
       {/* Usage Instructions */}
       {showInstructions && (
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MousePointer className="h-5 w-5 text-blue-600" />
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MousePointer className="h-4 w-4 text-blue-600" />
               How to Use Your Calendar
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="grid gap-3 md:grid-cols-2">
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <h4 className="text-sm font-medium">Creating Availability</h4>
-                <ul className="text-xs text-muted-foreground space-y-1">
+                <ul className="text-xs text-muted-foreground space-y-0.5">
                   <li>• <strong>Drag</strong> on the calendar to select time ranges</li>
                   <li>• <strong>Click</strong> on a date for bulk scheduling</li>
                   <li>• Use "Add Availability" button for advanced options</li>
                 </ul>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <h4 className="text-sm font-medium">Managing Appointments</h4>
-                <ul className="text-xs text-muted-foreground space-y-1">
+                <ul className="text-xs text-muted-foreground space-y-0.5">
                   <li>• <strong>Click</strong> any event to view details</li>
                   <li>• Approve/decline pending appointments</li>
                   <li>• Delete unused availability slots</li>
@@ -521,14 +503,14 @@ export function ExpertCalendar({
 
       {/* Calendar Stats */}
       {showStats && (
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
               <CardTitle className="text-sm font-medium">Available Slots</CardTitle>
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="pt-1">
+              <div className="text-xl font-bold">
                 {availabilitySlots.filter(slot => !slot.is_booked).length}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -538,12 +520,12 @@ export function ExpertCalendar({
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
               <CardTitle className="text-sm font-medium">Booked Slots</CardTitle>
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="pt-1">
+              <div className="text-xl font-bold">
                 {availabilitySlots.filter(slot => slot.is_booked).length}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -553,12 +535,12 @@ export function ExpertCalendar({
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
               <CardTitle className="text-sm font-medium">Pending Appointments</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="pt-1">
+              <div className="text-xl font-bold">
                 {appointments.filter(apt => apt.status === "pending").length}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -568,12 +550,12 @@ export function ExpertCalendar({
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
               <CardTitle className="text-sm font-medium">Hourly Rate</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${hourlyRate}</div>
+            <CardContent className="pt-1">
+              <div className="text-xl font-bold">${hourlyRate}</div>
               <p className="text-xs text-muted-foreground">
                 Per consultation
               </p>
@@ -584,152 +566,168 @@ export function ExpertCalendar({
 
       {/* Calendar Controls */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Calendar</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg">Calendar</CardTitle>
+              <CardDescription className="text-sm">
                 Drag to select time ranges, click dates for bulk scheduling, or click events to manage them.
               </CardDescription>
             </div>
-            <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Availability
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Add Availability Slots</DialogTitle>
-                  <DialogDescription>
-                    Create availability slots for clients to book consultations
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Date</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={bulkForm.date}
-                      onChange={(e) => setBulkForm(prev => ({ ...prev, date: e.target.value }))}
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="startTime">Start Time</Label>
-                      <Input
-                        id="startTime"
-                        type="time"
-                        value={bulkForm.startTime}
-                        onChange={(e) => setBulkForm(prev => ({ ...prev, startTime: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="endTime">End Time</Label>
-                      <Input
-                        id="endTime"
-                        type="time"
-                        value={bulkForm.endTime}
-                        onChange={(e) => setBulkForm(prev => ({ ...prev, endTime: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="slotDuration">Slot Duration (minutes)</Label>
-                    <Select 
-                      value={bulkForm.slotDuration.toString()} 
-                      onValueChange={(value) => setBulkForm(prev => ({ ...prev, slotDuration: parseInt(value) }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="60">1 hour</SelectItem>
-                        <SelectItem value="90">1.5 hours</SelectItem>
-                        <SelectItem value="120">2 hours</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="recurring"
-                        checked={bulkForm.recurring}
-                        onCheckedChange={(checked) => setBulkForm(prev => ({ ...prev, recurring: checked }))}
-                      />
-                      <Label htmlFor="recurring">Recurring weekly</Label>
-                    </div>
-                  </div>
-
-                  {bulkForm.recurring && (
-                    <>
-                      <div className="space-y-2">
-                        <Label>Repeat on days</Label>
-                        <div className="grid grid-cols-7 gap-1">
-                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                            <Button
-                              key={day}
-                              type="button"
-                              variant={bulkForm.recurringDays.includes(index.toString()) ? "default" : "outline"}
-                              size="sm"
-                              className="text-xs"
-                              onClick={() => {
-                                const dayStr = index.toString()
-                                setBulkForm(prev => ({
-                                  ...prev,
-                                  recurringDays: prev.recurringDays.includes(dayStr)
-                                    ? prev.recurringDays.filter(d => d !== dayStr)
-                                    : [...prev.recurringDays, dayStr]
-                                }))
-                              }}
-                            >
-                              {day}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="recurringWeeks">Number of weeks</Label>
-                        <Select 
-                          value={bulkForm.recurringWeeks.toString()} 
-                          onValueChange={(value) => setBulkForm(prev => ({ ...prev, recurringWeeks: parseInt(value) }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1 week</SelectItem>
-                            <SelectItem value="2">2 weeks</SelectItem>
-                            <SelectItem value="4">4 weeks</SelectItem>
-                            <SelectItem value="8">8 weeks</SelectItem>
-                            <SelectItem value="12">12 weeks</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  )}
-
-                  <Button 
-                    onClick={createBulkAvailability} 
-                    disabled={isLoading || !bulkForm.date}
-                    className="w-full"
-                  >
-                    {isLoading ? "Creating..." : "Create Availability"}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowInstructions(!showInstructions)}
+              >
+                {showInstructions ? "Hide" : "Show"} Instructions
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowStats(!showStats)}
+              >
+                {showStats ? "Hide" : "Show"} Statistics
+              </Button>
+              <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Availability
                   </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add Availability Slots</DialogTitle>
+                    <DialogDescription>
+                      Create availability slots for clients to book consultations
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="date">Date</Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        value={bulkForm.date}
+                        onChange={(e) => setBulkForm(prev => ({ ...prev, date: e.target.value }))}
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="startTime">Start Time</Label>
+                        <Input
+                          id="startTime"
+                          type="time"
+                          value={bulkForm.startTime}
+                          onChange={(e) => setBulkForm(prev => ({ ...prev, startTime: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="endTime">End Time</Label>
+                        <Input
+                          id="endTime"
+                          type="time"
+                          value={bulkForm.endTime}
+                          onChange={(e) => setBulkForm(prev => ({ ...prev, endTime: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="slotDuration">Slot Duration (minutes)</Label>
+                      <Select 
+                        value={bulkForm.slotDuration.toString()} 
+                        onValueChange={(value) => setBulkForm(prev => ({ ...prev, slotDuration: parseInt(value) }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="60">1 hour</SelectItem>
+                          <SelectItem value="90">1.5 hours</SelectItem>
+                          <SelectItem value="120">2 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="recurring"
+                          checked={bulkForm.recurring}
+                          onCheckedChange={(checked) => setBulkForm(prev => ({ ...prev, recurring: checked }))}
+                        />
+                        <Label htmlFor="recurring">Recurring weekly</Label>
+                      </div>
+                    </div>
+
+                    {bulkForm.recurring && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Repeat on days</Label>
+                          <div className="grid grid-cols-7 gap-1">
+                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                              <Button
+                                key={day}
+                                type="button"
+                                variant={bulkForm.recurringDays.includes(index.toString()) ? "default" : "outline"}
+                                size="sm"
+                                className="text-xs"
+                                onClick={() => {
+                                  const dayStr = index.toString()
+                                  setBulkForm(prev => ({
+                                    ...prev,
+                                    recurringDays: prev.recurringDays.includes(dayStr)
+                                      ? prev.recurringDays.filter(d => d !== dayStr)
+                                      : [...prev.recurringDays, dayStr]
+                                  }))
+                                }}
+                              >
+                                {day}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="recurringWeeks">Number of weeks</Label>
+                          <Select 
+                            value={bulkForm.recurringWeeks.toString()} 
+                            onValueChange={(value) => setBulkForm(prev => ({ ...prev, recurringWeeks: parseInt(value) }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">1 week</SelectItem>
+                              <SelectItem value="2">2 weeks</SelectItem>
+                              <SelectItem value="4">4 weeks</SelectItem>
+                              <SelectItem value="8">8 weeks</SelectItem>
+                              <SelectItem value="12">12 weeks</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </>
+                    )}
+
+                    <Button 
+                      onClick={createBulkAvailability} 
+                      disabled={isLoading || !bulkForm.date}
+                      className="w-full"
+                    >
+                      {isLoading ? "Creating..." : "Create Availability"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <div className="calendar-container">
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -743,7 +741,7 @@ export function ExpertCalendar({
               dateClick={handleDateClick}
               select={handleSelect}
               eventClick={handleEventClick}
-              height="600px"
+              height="500px"
               slotMinTime="06:00:00"
               slotMaxTime="22:00:00"
               businessHours={{
@@ -770,15 +768,15 @@ export function ExpertCalendar({
         <Dialog open={isQuickCreateDialogOpen} onOpenChange={setIsQuickCreateDialogOpen}>
           <DialogContent className="max-w-sm">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <Calendar className="h-4 w-4" />
                 Create Availability
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-sm">
                 {selectedTimeRange.start.toLocaleDateString()} • {selectedTimeRange.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {selectedTimeRange.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Switch
@@ -786,13 +784,13 @@ export function ExpertCalendar({
                     checked={quickCreateForm.splitIntoSlots}
                     onCheckedChange={(checked) => setQuickCreateForm(prev => ({ ...prev, splitIntoSlots: checked }))}
                   />
-                  <Label htmlFor="splitIntoSlots">Split into multiple slots</Label>
+                  <Label htmlFor="splitIntoSlots" className="text-sm">Split into multiple slots</Label>
                 </div>
               </div>
 
               {quickCreateForm.splitIntoSlots && (
                 <div className="space-y-2">
-                  <Label htmlFor="quickSlotDuration">Slot Duration (minutes)</Label>
+                  <Label htmlFor="quickSlotDuration" className="text-sm">Slot Duration (minutes)</Label>
                   <Select 
                     value={quickCreateForm.slotDuration.toString()} 
                     onValueChange={(value) => setQuickCreateForm(prev => ({ ...prev, slotDuration: parseInt(value) }))}
@@ -810,8 +808,8 @@ export function ExpertCalendar({
                 </div>
               )}
 
-              <div className="p-3 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground">
+              <div className="p-2 bg-muted rounded-lg">
+                <p className="text-xs text-muted-foreground">
                   {quickCreateForm.splitIntoSlots ? (
                     <>
                       Will create{" "}
@@ -838,6 +836,7 @@ export function ExpertCalendar({
                     setSelectedTimeRange(null)
                   }}
                   className="flex-1"
+                  size="sm"
                 >
                   Cancel
                 </Button>
@@ -845,6 +844,7 @@ export function ExpertCalendar({
                   onClick={createQuickAvailability} 
                   disabled={isLoading}
                   className="flex-1"
+                  size="sm"
                 >
                   {isLoading ? "Creating..." : "Create"}
                 </Button>
@@ -859,18 +859,18 @@ export function ExpertCalendar({
         <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-lg">
                 {selectedEvent.extendedProps?.type === "availability" ? "Availability Slot" : "Appointment"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-sm">
                 {new Date(selectedEvent.start).toLocaleString()} - {new Date(selectedEvent.end).toLocaleString()}
               </DialogDescription>
             </DialogHeader>
 
             {selectedEvent.extendedProps?.type === "availability" ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium">Status:</span>
+                  <span className="font-medium text-sm">Status:</span>
                   <Badge variant={selectedEvent.extendedProps.isBooked ? "destructive" : "default"}>
                     {selectedEvent.extendedProps.isBooked ? "Booked" : "Available"}
                   </Badge>
@@ -881,6 +881,7 @@ export function ExpertCalendar({
                     variant="destructive"
                     onClick={() => deleteAvailabilitySlot(selectedEvent.id.replace('slot-', ''))}
                     className="w-full"
+                    size="sm"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Availability Slot
@@ -888,11 +889,11 @@ export function ExpertCalendar({
                 )}
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center space-x-3">
-                  <Avatar>
+                  <Avatar className="h-8 w-8">
                     <AvatarImage src={selectedEvent.extendedProps?.clientAvatar || ""} />
-                    <AvatarFallback>
+                    <AvatarFallback className="text-xs">
                       {selectedEvent.extendedProps?.clientName
                         ?.split(" ")
                         .map((n: string) => n[0])
@@ -901,19 +902,19 @@ export function ExpertCalendar({
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{selectedEvent.extendedProps?.clientName}</p>
-                    <p className="text-sm text-muted-foreground">{selectedEvent.title}</p>
+                    <p className="font-medium text-sm">{selectedEvent.extendedProps?.clientName}</p>
+                    <p className="text-xs text-muted-foreground">{selectedEvent.title}</p>
                   </div>
                 </div>
 
                 {selectedEvent.extendedProps?.description && (
-                  <div className="p-3 bg-muted rounded-lg">
-                    <p className="text-sm">{selectedEvent.extendedProps.description}</p>
+                  <div className="p-2 bg-muted rounded-lg">
+                    <p className="text-xs">{selectedEvent.extendedProps.description}</p>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between">
-                  <span className="font-medium">Status:</span>
+                  <span className="font-medium text-sm">Status:</span>
                   <Badge variant={
                     selectedEvent.extendedProps?.status === "approved" ? "default" :
                     selectedEvent.extendedProps?.status === "pending" ? "secondary" :
@@ -929,6 +930,7 @@ export function ExpertCalendar({
                     <Button
                       onClick={() => updateAppointmentStatus(selectedEvent.id.replace('appointment-', ''), 'approved')}
                       className="flex-1"
+                      size="sm"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Approve
@@ -937,6 +939,7 @@ export function ExpertCalendar({
                       variant="destructive"
                       onClick={() => updateAppointmentStatus(selectedEvent.id.replace('appointment-', ''), 'declined')}
                       className="flex-1"
+                      size="sm"
                     >
                       <XCircle className="h-4 w-4 mr-2" />
                       Decline
@@ -949,6 +952,7 @@ export function ExpertCalendar({
                     variant="outline"
                     onClick={() => updateAppointmentStatus(selectedEvent.id.replace('appointment-', ''), 'completed')}
                     className="w-full"
+                    size="sm"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Mark as Completed
@@ -962,30 +966,30 @@ export function ExpertCalendar({
 
       {/* Legend */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Calendar Legend</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Calendar Legend</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-green-500 rounded"></div>
-              <span className="text-sm">Available</span>
+              <div className="w-3 h-3 bg-green-500 rounded"></div>
+              <span className="text-xs">Available</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span className="text-sm">Booked</span>
+              <div className="w-3 h-3 bg-red-500 rounded"></div>
+              <span className="text-xs">Booked</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-              <span className="text-sm">Pending</span>
+              <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+              <span className="text-xs">Pending</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-blue-500 rounded"></div>
-              <span className="text-sm">Approved</span>
+              <div className="w-3 h-3 bg-blue-500 rounded"></div>
+              <span className="text-xs">Approved</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-gray-500 rounded"></div>
-              <span className="text-sm">Completed</span>
+              <div className="w-3 h-3 bg-gray-500 rounded"></div>
+              <span className="text-xs">Completed</span>
             </div>
           </div>
         </CardContent>
