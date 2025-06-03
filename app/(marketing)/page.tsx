@@ -28,7 +28,12 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-b from-background to-muted/20">
           <div className="container relative">
-            <div className="flex max-w-[64rem] flex-col items-center gap-8 text-center py-16 md:py-24 lg:py-32">
+            <div
+              className="flex max-w-[64rem] flex-col items-center gap-8 text-center py-16 md:py-24 lg:py-32"
+              style={{
+                margin: "0 auto"
+              }}
+              >
               <div className="space-y-6">
                 <Badge variant="secondary" className="px-4 py-2">
                   <span className="mr-2">🚀</span>
