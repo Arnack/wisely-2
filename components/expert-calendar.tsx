@@ -742,13 +742,13 @@ export function ExpertCalendar({
               select={handleSelect}
               eventClick={handleEventClick}
               height="500px"
-              slotMinTime="06:00:00"
-              slotMaxTime="22:00:00"
-              businessHours={{
-                daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
-                startTime: '09:00',
-                endTime: '18:00',
-              }}
+              // slotMinTime="06:00:00"
+              // slotMaxTime="22:00:00"
+              // businessHours={{
+              //   daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
+              //   startTime: '09:00',
+              //   endTime: '18:00',
+              // }}
               weekends={true}
               selectable={true}
               selectMirror={true}
@@ -777,7 +777,7 @@ export function ExpertCalendar({
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="splitIntoSlots"
@@ -786,7 +786,7 @@ export function ExpertCalendar({
                   />
                   <Label htmlFor="splitIntoSlots" className="text-sm">Split into multiple slots</Label>
                 </div>
-              </div>
+              </div> */}
 
               {quickCreateForm.splitIntoSlots && (
                 <div className="space-y-2">

@@ -6,15 +6,8 @@ import { Room, RoomEvent, DisconnectReason } from "livekit-client"
 import {
   LiveKitRoom,
   VideoConference,
-  GridLayout,
-  ParticipantTile,
-  ControlBar,
-  Chat,
   RoomAudioRenderer,
   ConnectionStateToast,
-  useToken,
-  useTracks,
-  Track,
 } from "@livekit/components-react"
 import "@livekit/components-styles"
 import { createClient } from "@/lib/supabase/client"
@@ -44,9 +37,8 @@ interface VideoCallProps {
   appointmentId?: string
 }
 
-// Mock LiveKit server URL and API key - In production, these should be environment variables
-const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || "wss://your-livekit-server.com"
-const LIVEKIT_API_KEY = process.env.NEXT_PUBLIC_LIVEKIT_API_KEY || "mock-api-key"
+// LiveKit server URL - needs NEXT_PUBLIC_ prefix for client-side access
+const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || ""
 
 export function VideoCall({ roomName, userName, userEmail, appointmentId }: VideoCallProps) {
   const [token, setToken] = useState<string>("")
@@ -54,13 +46,16 @@ export function VideoCall({ roomName, userName, userEmail, appointmentId }: Vide
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [callDuration, setCallDuration] = useState(0)
-  const [participantCount, setParticipantCount] = useState(0)
+  const [participantCount, setParticipantCount] = useState(1)
   const [showChat, setShowChat] = useState(false)
   const [appointment, setAppointment] = useState<any>(null)
 
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClient()
+
+  // Check if we have a real LiveKit server configured
+  const hasRealLiveKit = LIVEKIT_URL && LIVEKIT_URL !== ""
 
   // Fetch appointment details if appointmentId is provided
   useEffect(() => {
@@ -97,36 +92,39 @@ export function VideoCall({ roomName, userName, userEmail, appointmentId }: Vide
     try {
       setIsLoading(true)
       
-      // In a real implementation, this would call your backend API to generate a LiveKit token
-      // For now, we'll simulate the token generation
-      const response = await fetch("/api/livekit/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          roomName,
-          participantName: userName,
-          participantIdentity: userEmail,
-        }),
-      })
+      // Only try to generate real token if we have a LiveKit server configured
+      if (hasRealLiveKit) {
+        const response = await fetch("/api/livekit/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            roomName,
+            participantName: userName,
+            participantIdentity: userEmail,
+          }),
+        })
 
-      if (!response.ok) {
-        throw new Error("Failed to generate token")
+        if (response.ok) {
+          const data = await response.json()
+          setToken(data.token)
+          setIsLoading(false)
+          return
+        }
       }
-
-      const data = await response.json()
-      setToken(data.token)
+      
+      // Fallback to mock token if no real server or if request failed
+      console.log("Using mock token - LiveKit server not configured or unavailable")
+      setToken("mock-token-for-demo")
     } catch (error) {
       console.error("Error generating token:", error)
-      setError("Failed to join the call. Please try again.")
-      
-      // For demo purposes, create a mock token
+      // Use mock token as fallback
       setToken("mock-token-for-demo")
     } finally {
       setIsLoading(false)
     }
-  }, [roomName, userName, userEmail])
+  }, [roomName, userName, userEmail, hasRealLiveKit])
 
   useEffect(() => {
     generateToken()
@@ -173,25 +171,10 @@ export function VideoCall({ roomName, userName, userEmail, appointmentId }: Vide
     router.push("/appointments")
   }, [appointmentId, callDuration, router, supabase, toast])
 
-  const handleRoomConnected = useCallback((room: Room) => {
+  const handleRoomConnected = useCallback(() => {
     setIsConnected(true)
     setError(null)
     
-    room.on(RoomEvent.ParticipantConnected, () => {
-      setParticipantCount(room.participants.size + 1) // +1 for local participant
-    })
-    
-    room.on(RoomEvent.ParticipantDisconnected, () => {
-      setParticipantCount(room.participants.size + 1)
-    })
-
-    room.on(RoomEvent.Disconnected, (reason?: DisconnectReason) => {
-      setIsConnected(false)
-      if (reason === DisconnectReason.KICKED) {
-        setError("You were removed from the call")
-      }
-    })
-
     toast({
       title: "Connected",
       description: "You've successfully joined the call",
@@ -257,187 +240,195 @@ export function VideoCall({ roomName, userName, userEmail, appointmentId }: Vide
     )
   }
 
-  // Mock implementation for demo - replace with actual LiveKit when server is available
-  if (token === "mock-token-for-demo") {
+  // Real LiveKit implementation (when server is configured)
+  if (hasRealLiveKit && token !== "mock-token-for-demo") {
     return (
-      <div className="h-screen bg-gray-900 flex flex-col">
-        {/* Header */}
-        <div className="bg-white border-b p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Video className="h-5 w-5 text-primary" />
+      <div className="h-screen">
+        <LiveKitRoom
+          video={true}
+          audio={true}
+          token={token}
+          serverUrl={LIVEKIT_URL}
+          data-lk-theme="default"
+          style={{ height: "100vh" }}
+          onConnected={handleRoomConnected}
+          onDisconnected={handleRoomDisconnected}
+        >
+          {/* Call Header */}
+          <div className="absolute top-0 left-0 right-0 z-10 bg-black/50 text-white p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
                 <h1 className="text-lg font-semibold">Video Call</h1>
+                {appointment && (
+                  <span className="text-sm opacity-90">{appointment.title}</span>
+                )}
               </div>
-              {appointment && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>•</span>
-                  <span>{appointment.title}</span>
-                  {appointment.expert_profiles && (
-                    <>
-                      <span>with</span>
-                      <span className="font-medium">{appointment.expert_profiles.users.full_name}</span>
-                    </>
-                  )}
+              
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span className="text-sm font-mono">{formatDuration(callDuration)}</span>
                 </div>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span className="text-sm font-mono">{formatDuration(callDuration)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span className="text-sm">{participantCount}</span>
-              </div>
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Connected
-              </Badge>
-            </div>
-          </div>
-        </div>
-
-        {/* Video Area */}
-        <div className="flex-1 flex">
-          {/* Main Video */}
-          <div className="flex-1 bg-gray-800 relative">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-white space-y-4">
-                <div className="w-32 h-32 bg-gray-700 rounded-full flex items-center justify-center mx-auto">
-                  <Video className="h-16 w-16 text-gray-400" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold">{userName}</h3>
-                  <p className="text-gray-400">Demo Video Call Interface</p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    This is a demo interface. In production, this would show live video feeds.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Participant Video (Demo) */}
-            <div className="absolute top-4 right-4 w-48 h-36 bg-gray-700 rounded-lg border-2 border-white">
-              <div className="h-full flex items-center justify-center text-white text-sm">
-                Participant Video
+                <Badge variant="secondary">
+                  <Users className="h-3 w-3 mr-1" />
+                  {participantCount}
+                </Badge>
               </div>
             </div>
           </div>
 
-          {/* Chat Panel */}
-          {showChat && (
-            <div className="w-80 bg-white border-l flex flex-col">
-              <div className="p-4 border-b">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Chat
-                </h3>
-              </div>
-              <div className="flex-1 p-4 space-y-3 text-sm">
-                <div className="bg-gray-100 p-2 rounded">
-                  <strong>System:</strong> Call started
-                </div>
-                <div className="bg-blue-50 p-2 rounded">
-                  <strong>You:</strong> Hello! Ready for our consultation.
-                </div>
-              </div>
-              <div className="p-4 border-t">
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    placeholder="Type a message..." 
-                    className="flex-1 px-3 py-2 border rounded text-sm"
-                  />
-                  <Button size="sm">Send</Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Controls */}
-        <div className="bg-white border-t p-4">
-          <div className="flex items-center justify-center gap-4">
-            <Button variant="outline" size="sm">
-              <Mic className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm">
-              <Video className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm">
-              <Monitor className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowChat(!showChat)}
-            >
-              <MessageSquare className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={handleDisconnect}
-            >
-              <PhoneOff className="h-4 w-4 mr-2" />
-              End Call
-            </Button>
-          </div>
-        </div>
+          {/* Main Video Conference */}
+          <VideoConference />
+          
+          {/* Audio Renderer */}
+          <RoomAudioRenderer />
+          
+          {/* Connection Toast */}
+          <ConnectionStateToast />
+        </LiveKitRoom>
       </div>
     )
   }
 
-  // Real LiveKit implementation (when server is configured)
+  // Mock implementation for demo - used when no real LiveKit server is configured
   return (
-    <div className="h-screen">
-      <LiveKitRoom
-        video={true}
-        audio={true}
-        token={token}
-        serverUrl={LIVEKIT_URL}
-        data-lk-theme="default"
-        style={{ height: "100vh" }}
-        onConnected={handleRoomConnected}
-        onDisconnected={handleRoomDisconnected}
-      >
-        {/* Call Header */}
-        <div className="absolute top-0 left-0 right-0 z-10 bg-black/50 text-white p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+    <div className="h-screen bg-gray-900 flex flex-col">
+      {/* Header */}
+      <div className="bg-white border-b p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Video className="h-5 w-5 text-primary" />
               <h1 className="text-lg font-semibold">Video Call</h1>
-              {appointment && (
-                <span className="text-sm opacity-90">{appointment.title}</span>
+              {!hasRealLiveKit && (
+                <Badge variant="outline" className="text-xs">
+                  Demo Mode
+                </Badge>
               )}
             </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span className="text-sm font-mono">{formatDuration(callDuration)}</span>
+            {appointment && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>•</span>
+                <span>{appointment.title}</span>
+                {appointment.expert_profiles && (
+                  <>
+                    <span>with</span>
+                    <span className="font-medium">{appointment.expert_profiles.users.full_name}</span>
+                  </>
+                )}
               </div>
-              <Badge variant="secondary">
-                <Users className="h-3 w-3 mr-1" />
-                {participantCount}
-              </Badge>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-mono">{formatDuration(callDuration)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span className="text-sm">{participantCount}</span>
+            </div>
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Connected
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* Video Area */}
+      <div className="flex-1 flex">
+        {/* Main Video */}
+        <div className="flex-1 bg-gray-800 relative">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center text-white space-y-4">
+              <div className="w-32 h-32 bg-gray-700 rounded-full flex items-center justify-center mx-auto">
+                <Video className="h-16 w-16 text-gray-400" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold">{userName}</h3>
+                <p className="text-gray-400">
+                  {hasRealLiveKit ? "Connecting to LiveKit..." : "Demo Video Call Interface"}
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {hasRealLiveKit 
+                    ? "Please wait while we connect you to the video call..." 
+                    : "This is a demo interface. Configure LiveKit server for real video calls."
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Participant Video (Demo) */}
+          <div className="absolute top-4 right-4 w-48 h-36 bg-gray-700 rounded-lg border-2 border-white">
+            <div className="h-full flex items-center justify-center text-white text-sm">
+              Participant Video
             </div>
           </div>
         </div>
 
-        {/* Main Video Conference */}
-        <VideoConference 
-          chatMessageFormatter={(message) => `${message.from?.name}: ${message.message}`}
-        />
-        
-        {/* Audio Renderer */}
-        <RoomAudioRenderer />
-        
-        {/* Connection Toast */}
-        <ConnectionStateToast />
-      </LiveKitRoom>
+        {/* Chat Panel */}
+        {showChat && (
+          <div className="w-80 bg-white border-l flex flex-col">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Chat
+              </h3>
+            </div>
+            <div className="flex-1 p-4 space-y-3 text-sm">
+              <div className="bg-gray-100 p-2 rounded">
+                <strong>System:</strong> Call started
+              </div>
+              <div className="bg-blue-50 p-2 rounded">
+                <strong>You:</strong> Hello! Ready for our consultation.
+              </div>
+            </div>
+            <div className="p-4 border-t">
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="Type a message..." 
+                  className="flex-1 px-3 py-2 border rounded text-sm"
+                />
+                <Button size="sm">Send</Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Controls */}
+      <div className="bg-white border-t p-4">
+        <div className="flex items-center justify-center gap-4">
+          <Button variant="outline" size="sm">
+            <Mic className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm">
+            <Video className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm">
+            <Monitor className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowChat(!showChat)}
+          >
+            <MessageSquare className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={handleDisconnect}
+          >
+            <PhoneOff className="h-4 w-4 mr-2" />
+            End Call
+          </Button>
+        </div>
+      </div>
     </div>
   )
 } 
